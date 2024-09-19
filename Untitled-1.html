@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrashMusic</title>
+    <link rel="icon" href="Downloads/favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-size: cover;
+            background-position: center 50%;
+            background-repeat: no-repeat;
+        }
+        img {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 20%;
+            margin-bottom: 10px;
+        }
+        .music-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .music-controls {
+            text-align: center;
+        }
+        .music-controls button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 12px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .music-controls button:hover {
+            background-color: #0056b3;
+        }
+        .time {
+            margin-top: 10px;
+        }
+        .progress-container {
+            width: 300px;
+            margin: 20px 0;
+        }
+        .progress-container input[type="range"] {
+            width: 100%;
+            border-radius: 12px;
+            background: #ddd;
+        }
+        .progress-container input[type="range"]::-webkit-slider-thumb {
+            border-radius: 12px;
+            background: #007bff;
+        }
+        .progress-container input[type="range"]::-moz-range-thumb {
+            border-radius: 12px;
+            background: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <img id="centralImage" src="images/sua-imagem.jpg" alt="Imagem Centralizada">
+    <div class="music-title" id="musicTitle">Nome da Música 1</div>
+    <div class="music-controls">
+        <button id="playPauseBtn">Play</button>
+        <button id="switchTrackBtn">Trocar Música</button>
+        <div class="time">
+            <span id="currentTime">00:00</span> / <span id="duration">00:00</span>
+        </div>
+        <div class="progress-container">
+            <input type="range" id="progressBar" min="0" max="100" value="0" step="1">
+        </div>
+        <audio id="audio" src="audio/sua-musica.mp3"></audio>
+        <audio id="audio2" src="audio/sua-segunda-musica.mp3"></audio>
+    </div>
+
+    <script>
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const switchTrackBtn = document.getElementById('switchTrackBtn');
+        const audio = document.getElementById('audio');
+        const audio2 = document.getElementById('audio2');
+        const currentTimeElem = document.getElementById('currentTime');
+        const durationElem = document.getElementById('duration');
+        const progressBar = document.getElementById('progressBar');
+        const centralImage = document.getElementById('centralImage');
+        const musicTitle = document.getElementById('musicTitle');
+
+        let isPlaying = false;
+        let currentTrack = audio;
+
+        const tracks = {
+            audio: {
+                img: 'images/sua-imagem.jpg',
+                bg: 'images/fundo.jpg',
+                title: 'A Torre Dos Magos'
+            },
+            audio2: {
+                img: 'images/sua-segunda-imagem.jpg',
+                bg: 'images/fundo2.jpg',
+                title: 'A Terra Cinzenta'
+            }
+        };
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function updateTime() {
+            currentTimeElem.textContent = formatTime(currentTrack.currentTime);
+            if (currentTrack.duration) {
+                const progress = (currentTrack.currentTime / currentTrack.duration) * 100;
+                progressBar.value = progress;
+                durationElem.textContent = formatTime(currentTrack.duration);
+            }
+        }
+
+        function updateCurrentTrack() {
+            currentTrack.addEventListener('timeupdate', updateTime);
+        }
+
+        progressBar.addEventListener('input', () => {
+            const newTime = (progressBar.value / 100) * currentTrack.duration;
+            currentTrack.currentTime = newTime;
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                currentTrack.pause();
+                playPauseBtn.textContent = 'Play';
+            } else {
+                currentTrack.play();
+                playPauseBtn.textContent = 'Pause';
+            }
+            isPlaying = !isPlaying;
+        });
+
+        switchTrackBtn.addEventListener('click', () => {
+            if (currentTrack === audio) {
+                audio.pause();
+                currentTrack = audio2;
+                centralImage.src = tracks.audio2.img;
+                document.body.style.backgroundImage = `url(${tracks.audio2.bg})`;
+                musicTitle.textContent = tracks.audio2.title;
+                audio2.currentTime = 0;
+                audio2.play();
+                progressBar.value = 0;
+                updateTime();
+            } else {
+                audio2.pause();
+                currentTrack = audio;
+                centralImage.src = tracks.audio.img;
+                document.body.style.backgroundImage = `url(${tracks.audio.bg})`;
+                musicTitle.textContent = tracks.audio.title;
+                audio.currentTime = 0;
+                audio.play();
+                progressBar.value = 0;
+                updateTime();
+            }
+            playPauseBtn.textContent = 'Pause';
+            isPlaying = true;
+
+            // Remover o listener do áudio anterior
+            if (currentTrack === audio) {
+                audio2.removeEventListener('timeupdate', updateTime);
+            } else {
+                audio.removeEventListener('timeupdate', updateTime);
+            }
+
+            // Adiciona o listener para o track atual
+            updateCurrentTrack();
+        });
+
+        audio.addEventListener('loadeddata', () => {
+            durationElem.textContent = formatTime(audio.duration);
+        });
+
+        audio2.addEventListener('loadeddata', () => {
+            durationElem.textContent = formatTime(audio2.duration);
+        });
+
+        // Inicializa o primeiro track
+        updateCurrentTrack();
+    </script>
+</body>
+</html>
